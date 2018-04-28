@@ -40,7 +40,6 @@ function draw() {
 
   stroke(154, 211, 244,random(25,50))
   strokeWeight(.8)
-  let lines = [];
 
   for (let i = 0; i < numStars; i++) {
     if (dist(mouseX,mouseY,starX[i],starY[i]) < 100) {
