@@ -1,26 +1,31 @@
+//http://archive.bridgesmathart.org/2017/bridges2017-213.pdf
+const depth = 0;
+var slider;
 const LEFT = true;
 const RIGHT = false;
+const config = {
+  1: 'green',
+  2: 'green',
+  3: 'yellow',
+  4: 'green',
+  5: 'yellow'
+}
 
 function setup() {
   createCanvas(displayWidth,displayHeight*2/3)
+  slider = createSlider(0,10,1);
+  slider.position(250,50);
+
+  frameRate(2)
 }
 function draw() {
   clear()
   background(51);
 
   fill(50,5,150)
-  const kite = new Kite(createVector(100,100),createVector(200,200));
-  kite.render()
-  const halfK = kite.half(LEFT);
-  fill('yellow')
-  const children = halfK.subdivide();
-  children.forEach( (child) => {
-    child.subdivide().forEach((subchild) => {
-      fill('orange')
-      subchild.render()
-    });
-  });
+  initializeStar()
 }
+
 function vectorBetween(a,b) {
   return createVector(b.x-a.x, b.y - a.y);
 }
@@ -31,6 +36,30 @@ function midpoint(a,b) {
 function opposite(side) {
   return !side;
 }
+function vectorFromMagAndAngle(mag,angle) {
+  angleMode(DEGREES)
+  const x = mag * cos(angle);
+  const y = mag * sin(angle);
+  return createVector(x,y)
+}
+
+function initializeStar() {
+  const center = createVector(width/2,height/2);
+  const vector = createVector(200,200);
+  const starVectorLength = vector.mag()
+  angleMode(DEGREES);
+  for (let i = 1; i <= 5; i++) {
+    const angle = (360 / 5) * i;
+    const newVec = vector.copy();
+    newVec.rotate(angle)
+    const dart = new Dart(center,newVec);
+    const left = dart.half(LEFT);
+    const right = dart.half(RIGHT);
+    left.render(slider.value());
+    right.render(slider.value());
+  }
+}
+
 //pass point in as vector.
 class Kite {
   constructor(point,vector) {
@@ -87,29 +116,53 @@ class Dart {
     const ratio = 2*sin(18);
     return p5.Vector.lerp(this.tip,this.pointFromSide(side),ratio);
   }
+  render() {
+    angleMode(DEGREES)
+    const rightVec = this.vector.copy();
+    rightVec.rotate(-72);
+    const leftVec = this.vector.copy();
+    leftVec.rotate(72);
+
+    const x3 = this.tail.x + rightVec.x
+    const y3 = this.tail.y + rightVec.y
+
+    const x4 = this.tail.x + leftVec.x
+    const y4 = this.tail.y + leftVec.y
+
+    triangle(this.tip.x,this.tip.y,this.tail.x,this.tail.y,x3,y3)
+    triangle(this.tip.x,this.tip.y,this.tail.x,this.tail.y,x4,y4)
+  }
 }
 
 class HalfKite {
-  constructor(kite,side) {
+  constructor(kite,side,label) {
     this.kite = kite;
     this.side = side;
+    this.label = label;
   }
   subdivide() {
     const parentKite = this.kite;
     const babyKite = new Kite(parentKite.center,vectorBetween(parentKite.center,parentKite.pointFromSide(this.side)));
     const dart = new Dart(parentKite.tail,vectorBetween(parentKite.tail,babyKite.pointFromOtherSide(this.side)));
-    return [new HalfKite(babyKite,LEFT), new HalfKite(babyKite,RIGHT), new HalfDart(dart,opposite(this.side))];
+    return [new HalfKite(babyKite,LEFT,1), new HalfKite(babyKite,RIGHT,2), new HalfDart(dart,opposite(this.side),3)];
   }
-  render(config) {
-    const parentKite = this.kite;
-    const pointFromSide = parentKite.pointFromSide(this.side);
-    triangle(parentKite.tip.x,parentKite.tip.y,pointFromSide.x,pointFromSide.y,parentKite.tail.x,parentKite.tail.y);
+  render(level=0) {
+    if (level <= 0) {
+      fill(config[this.label])
+      const parentKite = this.kite;
+      const pointFromSide = parentKite.pointFromSide(this.side);
+      triangle(parentKite.tip.x,parentKite.tip.y,pointFromSide.x,pointFromSide.y,parentKite.tail.x,parentKite.tail.y);
+    } else {
+      const children = this.subdivide();
+      children.forEach((child) => child.render(level-1))
+    }
   }
 }
 class HalfDart {
-  constructor(dart,side) {
+  constructor(dart,side,label) {
     this.dart = dart;
     this.side = side;
+    this.label = label;
   }
   subdivide() {
     const parentDart = this.dart;
@@ -117,12 +170,18 @@ class HalfDart {
     const pointFromMidSide = parentDart.pointFromMidSide(this.side);
     const babyKite = new Kite(pointFromMidSide,vectorBetween(pointFromMidSide,parentDart.tip))
     const babyDart = new Dart(sidePoint,vectorBetween(sidePoint,pointFromMidSide));
-    return [new HalfKite(babyKite,opposite(this.side)), new HalfDart(babyDart,this.side)]
+    return [new HalfKite(babyKite,opposite(this.side),4), new HalfDart(babyDart,this.side,5)]
   }
-  render(config) {
-    const parentDart = this.dart;
-    const pointFromSide = parentDart.pointFromSide(this.side);
-    triangle(parentDart.tip.x,parentDart.tip.y,pointFromSide.x,pointFromSide.y,parentDart.tail.x,parentDart.tail.y);
+  render(level=0) {
+    if (level <= 0) {
+      fill(config[this.label])
+      const parentDart = this.dart;
+      const pointFromSide = parentDart.pointFromSide(this.side);
+      triangle(parentDart.tip.x,parentDart.tip.y,pointFromSide.x,pointFromSide.y,parentDart.tail.x,parentDart.tail.y);
+    } else {
+      const children = this.subdivide();
+      children.forEach((child) => child.render(level-1))
+    }
   }
 
 
