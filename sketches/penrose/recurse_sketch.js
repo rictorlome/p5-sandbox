@@ -13,7 +13,7 @@ const config = {
 
 function setup() {
   createCanvas(displayWidth,displayHeight*2/3)
-  slider = createSlider(0,10,1);
+  slider = createSlider(1,8,1);
   slider.position(250,50);
 
   frameRate(2)
