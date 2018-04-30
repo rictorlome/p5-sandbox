@@ -1,20 +1,30 @@
 var slider;
+var config;
+var curTime;
+var TIME_OFFSET = 0;
+
 const MAX_DEPTH = 9;
-const FRAME_RATE = 18;
-const config = {
-  1: 'white',
-  2: 'grey',
-  3: 'grey',
-  4: 'white',
-  5: 'pink'
-}
+const FRAME_RATE = 12;
+const SECS_TO_FILL = 5;
 const depthToShapes = {};
+
+p5.disableFriendlyErrors = true;
 
 function setup() {
   createCanvas(displayWidth,displayHeight)
   slider = createSlider(3,MAX_DEPTH,8);
   slider.position(250,50);
+  button = createButton('Reset');
+  button.position(250,80)
+  button.mousePressed( () => TIME_OFFSET = curTime)
 
+  config = {
+    1: color('white'),
+    2: color('grey'),
+    3: color('grey'),
+    4: color('white'),
+    5: color('pink')
+  }
   frameRate(FRAME_RATE)
 
   const center = createVector(width/2,height/2);
@@ -28,11 +38,13 @@ function draw() {
 
   fill(50,5,150)
   strokeWeight(1/(2*slider.value()))
-  const curTime = frameCount / FRAME_RATE;
+  curTime = frameCount / FRAME_RATE;
   const shapes = shapesAtDepth(depthToShapes,slider.value())
-  shapes.forEach(shape => {
-    if (isVisible(shape.tip(),curTime)) shape.render()
-  });
+  const length = shapes.length;
+  for (let i = 0; i < length; i++) {
+    const shape = shapes[i];
+    if (isVisible(shape.tip(),curTime-TIME_OFFSET)) shape.render()
+  }
 }
 
 function initializeStar(center,length) {
@@ -83,7 +95,7 @@ function shapesAtDepth(map, depth) {
 function timeSubmerged(point,func) {
   const newPoint = createVector(point.x/width,point.y/height);
   const fracTime = func(newPoint);
-  return fracTime * 3;
+  return fracTime * SECS_TO_FILL;
 }
 function paraboloid(point) {
   var x = point.x;
@@ -95,10 +107,6 @@ function paraboloid(point) {
   // return Math.sin(x) + Math.sin(y);
   // return Math.pow(Math.abs(point.x-0.5),2) + Math.abs(Math.sin(point.y-0.5))*3;
   // return Math.pow(x, 2) + 0.5 * (x + Math.sin(y));
-}
-function mouseClicked() {
-  const vec = createVector(mouseX,mouseY)
-  console.log(timeSubmerged(vec, paraboloid))
 }
 function isVisible(point, time=0) {
   // const xFrontier = width * time;

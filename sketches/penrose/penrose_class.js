@@ -13,16 +13,21 @@ class Kite {
     this.tip = point;
     this.tail = p5.Vector.add(point,vector);
     this.vector = vector;
-    this.center = p5.Vector.lerp(this.tail,this.tip,ratio)
+    this.center = p5.Vector.lerp(this.tail,this.tip,ratio);
+    this.pointFromLeftSide = this.slowPointFromSide(LEFT);
+    this.pointFromRightSide = this.slowPointFromSide(RIGHT);
   }
   half(side) {
     return new HalfKite(this,side);
   }
-  pointFromSide(side) {
+  slowPointFromSide(side) {
     const copyVec = this.vector.copy();
     angleMode(DEGREES);
     side === RIGHT ? copyVec.rotate(216) : copyVec.rotate(-216);
     return copyVec.add(this.tail);
+  }
+  pointFromSide(side) {
+    return (side === RIGHT ? this.pointFromRightSide : this.pointFromLeftSide);
   }
   pointFromOtherSide(side) {
     return this.pointFromSide(!side);
@@ -37,15 +42,20 @@ class Dart {
     this.tip = point;
     this.tail = p5.Vector.add(point,vector);
     this.vector = vector;
+    this.pointFromLeftSide = this.slowPointFromSide(LEFT);
+    this.pointFromRightSide = this.slowPointFromSide(RIGHT);
   }
   half(side) {
     return new HalfDart(this,side);
   }
-  pointFromSide(side) {
+  slowPointFromSide(side) {
     const copyVec = this.vector.copy();
     angleMode(DEGREES);
     side === RIGHT ? copyVec.rotate(72) : copyVec.rotate(-72);
     return copyVec.add(this.tail);
+  }
+  pointFromSide(side) {
+    return (side === RIGHT ? this.pointFromRightSide : this.pointFromLeftSide);
   }
   pointFromMidSide(side) {
     return p5.Vector.lerp(this.tip,this.pointFromSide(side),ratio);
