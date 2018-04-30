@@ -1,18 +1,18 @@
 var slider;
-const MAX_DEPTH = 10;
-const FRAME_RATE = 10;
+const MAX_DEPTH = 9;
+const FRAME_RATE = 18;
 const config = {
-  1: 'green',
-  2: 'blue',
-  3: 'red',
-  4: 'orange',
-  5: 'yellow'
+  1: 'white',
+  2: 'grey',
+  3: 'grey',
+  4: 'white',
+  5: 'pink'
 }
 const depthToShapes = {};
 
 function setup() {
   createCanvas(displayWidth,displayHeight)
-  slider = createSlider(1,MAX_DEPTH,8);
+  slider = createSlider(3,MAX_DEPTH,8);
   slider.position(250,50);
 
   frameRate(FRAME_RATE)
@@ -80,7 +80,29 @@ function shapesAtDepth(map, depth) {
   map[depth] = newDepth;
   return newDepth;
 }
+function timeSubmerged(point,func) {
+  const newPoint = createVector(point.x/width,point.y/height);
+  const fracTime = func(newPoint);
+  return fracTime * 3;
+}
+function paraboloid(point) {
+  var x = point.x;
+  var y = point.y;
+  // x = Math.pow(x - 0.5,2)
+  // y = Math.pow(y - 0.5,2)
+  return x + y * Math.sin(3 * x);
+  // return Math.sin(x) + 2 * y * Math.cos(6 * Math.PI * y );
+  // return Math.sin(x) + Math.sin(y);
+  // return Math.pow(Math.abs(point.x-0.5),2) + Math.abs(Math.sin(point.y-0.5))*3;
+  // return Math.pow(x, 2) + 0.5 * (x + Math.sin(y));
+}
+function mouseClicked() {
+  const vec = createVector(mouseX,mouseY)
+  console.log(timeSubmerged(vec, paraboloid))
+}
 function isVisible(point, time=0) {
-  const xFrontier = (width/10) * time;
-  return point.x < xFrontier;
+  // const xFrontier = width * time;
+  // const z = sin(point.x+point.y) + point.x;
+  // return z < xFrontier;
+  return timeSubmerged(point,paraboloid) < time;
 }
